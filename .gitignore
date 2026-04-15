@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Project specific ignores
+data/
+mlruns/
+checkpoints/
+
+# Virtual environments
+venv/
+env/
+.venv/
+miniforge3/
+
+# Logs
+*.log
+logs/
+
+# MacOS
+.DS_Store
