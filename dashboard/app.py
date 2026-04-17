@@ -36,7 +36,7 @@ def get_recent_transactions(limit=100):
         conn = sqlite3.connect("data/inference_logs.db")
         df = pd.read_sql_query(f"SELECT * FROM inference_logs ORDER BY timestamp DESC LIMIT {limit}", conn)
         conn.close()
-        # Convert timestamp to datetime for better plotting
+        # Convert timestamp to datetime 
         if not df.empty:
             df['timestamp'] = pd.to_datetime(df['timestamp'])
         return df
@@ -107,7 +107,7 @@ def main():
     
     st.markdown("---")
 
-    # Layout: 2 Columns for Live Data feed & Visualizations
+    # 2 Columns for Live Data feed & Visualizations
     left_col, right_col = st.columns([1.2, 1])
 
     with left_col:

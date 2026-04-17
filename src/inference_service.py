@@ -61,7 +61,7 @@ try:
             try:
                 model_uri = f"runs:/{latest_run_id}/{path}"
                 model = mlflow.xgboost.load_model(model_uri)
-                print(f"✅ Successfully loaded XGBoost model from run: {latest_run_id}")
+                print(f"Successfully loaded XGBoost model from run: {latest_run_id}")
                 break
             except Exception:
                 continue
@@ -71,7 +71,7 @@ try:
     if model is None:
         raise ValueError("Could not find any valid model artifacts in recent runs.")
 except Exception as e:
-    print(f"⚠️ Warning: Failed to load model from MLflow. Ensure 'python src/baseline_trainer.py' was run. Error: {e}")
+    print(f"Warning: Failed to load model from MLflow. Ensure 'python src/baseline_trainer.py' was run. Error: {e}")
 
 # --- API Data Models ---
 class InferenceRequest(BaseModel):
@@ -94,10 +94,8 @@ def predict(request: InferenceRequest):
          raise HTTPException(status_code=503, detail="Model is not loaded.")
          
     # 1. Feature Preprocessing
-    # Match EXACT formatting used during training: ['user_id', 'event_type', 'product_id', 'price']
     encoded_event = EVENT_MAP.get(request.event_type.lower(), 2) # Default to 'view'
     
-    # Needs to be a DataFrame as that is what XGBoost expects from Pandas signature
     features = pd.DataFrame([{
         'user_id': request.user_id,
         'event_type': encoded_event,
@@ -124,5 +122,4 @@ def predict(request: InferenceRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    # Pass the app instance directly to avoid module path resolution errors across environments
     uvicorn.run(app, host="0.0.0.0", port=8000)

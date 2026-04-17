@@ -12,13 +12,12 @@ def create_spark_session() -> SparkSession:
     """
     Initialize PySpark session with the required Kafka SQL package to read streams.
     """
-    # Dynamically fetch your exact PySpark version to prevent JAR mismatch
     spark_version = pyspark.__version__
     
-    # PySpark 3.x uses Scala 2.12 by default!
+    # PySpark 3.x uses Scala 2.12
     kafka_pkg = f"org.apache.spark:spark-sql-kafka-0-10_2.12:{spark_version}"
     
-    print(f"🚨 Booting Spark {spark_version} with Kafka Package: {kafka_pkg} 🚨")
+    print(f"Booting Spark {spark_version} with Kafka Package: {kafka_pkg}")
     
     return SparkSession.builder \
         .appName("ARES_Spark_Stream_Processor") \
@@ -82,7 +81,7 @@ def main():
                 response = requests.post("http://localhost:8000/predict", json=data, timeout=5)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                print(f"⚠️ Error sending record to Inference API: {e}")
+                print(f"Error sending record to Inference API: {e}")
 
     query = transformed_stream \
         .writeStream \
@@ -91,7 +90,7 @@ def main():
         .option("checkpointLocation", "/tmp/ares_fresh_chkpt_v3") \
         .start()
         
-    # Await termination prevents the script from stopping immediately
+    # Await termination
     query.awaitTermination()
 
 if __name__ == "__main__":

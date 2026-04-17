@@ -43,7 +43,6 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     df_processed = df.copy()
     
     # 1. Handle missing values
-    # Drop rows if target (is_fraud) is missing
     if 'is_fraud' in df_processed.columns:
         df_processed = df_processed.dropna(subset=['is_fraud'])
     
@@ -65,7 +64,6 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
     # 2. Encode categorical variables
     encoder = LabelEncoder()
     if 'event_type' in df_processed.columns:
-        # Convert to string to safely encode mixed types if any
         df_processed['event_type'] = encoder.fit_transform(df_processed['event_type'].astype(str))
         
     return df_processed
@@ -118,7 +116,6 @@ def main():
     args = parser.parse_args()
 
     # Configure MLflow to track locally in the current directory (creates ./mlruns)
-    # Default URI works perfectly for local tracking and model artifacts
     mlflow.set_experiment("ARES_Phase1_Baseline")
 
     print(f"Loading data from {args.data_path}...")

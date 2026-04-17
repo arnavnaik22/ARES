@@ -51,7 +51,7 @@ def main():
             # Convert row to dictionary payload
             payload = row.to_dict()
             
-            # 🌪️ Simulate dynamic Concept Drift
+            # Simulate dynamic Concept Drift
             # For every block of 150 events: 
             # - First 100: Normal baseline data
             # - Next 50: Severe concept drift (Prices surge, anomalous purchase behavior)

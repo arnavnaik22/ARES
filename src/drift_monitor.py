@@ -29,7 +29,6 @@ def calculate_psi(expected, actual, buckets=10):
     actual_percents = np.histogram(actual, breakpoints)[0] / len(actual)
 
     def sub_psi(e_perc, a_perc):
-        # Prevent zero-division issue
         if a_perc == 0:
             a_perc = 0.0001
         if e_perc == 0:
@@ -47,9 +46,9 @@ def main():
     try:
         baseline_df = pd.read_csv(baseline_path)
         expected_price = baseline_df['price'].dropna().values
-        print(f"✅ Baseline loaded. {len(expected_price)} records found.")
+        print(f"Baseline loaded. {len(expected_price)} records found.")
     except Exception as e:
-         print(f"❌ Failed to load baseline data: {e}. Check if data/raw/ecommerce_behavior.csv exists.")
+         print(f"Failed to load baseline data: {e}. Check if data/raw/ecommerce_behavior.csv exists.")
          return
          
     db_path = "data/inference_logs.db"
@@ -60,7 +59,6 @@ def main():
     
     while True:
          try:
-             # Check if database exists and fetch the latest inference logs
              conn = sqlite3.connect(db_path)
              query = "SELECT price FROM inference_logs ORDER BY timestamp DESC LIMIT 200"
              recent_batch = pd.read_sql_query(query, conn)
@@ -71,11 +69,10 @@ def main():
                   psi = calculate_psi(expected_price, actual_price)
                   
                   if psi > psi_threshold:
-                       print(f"\n🚨🚨 CONCEPT DRIFT DETECTED 🚨🚨")
+                       print(f"\nCONCEPT DRIFT DETECTED")
                        print(f"Feature: 'price' | Current PSI: {psi:.4f} (Threshold: {psi_threshold})")
                        print(f"Warning: The incoming distribution has significantly shifted from the baseline!\n")
                        
-                       # Trigger Automated Retraining Engine ASYNCHRONOUSLY
                        import uuid
                        import datetime
                        import subprocess
@@ -84,7 +81,6 @@ def main():
                            conn_chk = sqlite3.connect(db_path, timeout=10)
                            conn_chk.execute('PRAGMA journal_mode=WAL;')
                            cursor_chk = conn_chk.cursor()
-                           # Auto-Heal Orphaned Jobs (Fixes Ctrl+C deadlocks)
                            timeout_threshold = (datetime.datetime.now() - datetime.timedelta(minutes=5)).isoformat()
                            cursor_chk.execute(f"UPDATE retraining_jobs SET status = 'FAILED', decision = 'ORPHANED_TIMEOUT' WHERE status NOT IN ('COMPLETED', 'FAILED', 'REJECTED') AND start_time < '{timeout_threshold}'")
                            conn_chk.commit()

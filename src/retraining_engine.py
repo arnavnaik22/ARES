@@ -82,7 +82,7 @@ def load_production_model(client: MlflowClient, experiment_name=EXPERIMENT_NAME)
             try:
                 model_uri = f"runs:/{latest_run_id}/{path}"
                 model = mlflow.xgboost.load_model(model_uri)
-                print(f"✅ Successfully loaded model from: {model_uri}")
+                print(f"Successfully loaded model from: {model_uri}")
                 return model, run
             except Exception:
                 continue
@@ -134,10 +134,10 @@ def generate_shap_analysis(model, X, job_id=None):
         shap_path = os.path.join("data", shap_filename)
         plt.savefig(shap_path)
         plt.close()
-        print(f"✅ SHAP analysis saved to {shap_path}")
+        print(f"SHAP analysis saved to {shap_path}")
         return shap_path
     except Exception as e:
-        print(f"⚠️ SHAP analysis failed: {e}")
+        print(f"SHAP analysis failed: {e}")
         return None
 
 def evaluate_model(model, X_test, y_test):
@@ -166,7 +166,7 @@ def run_retraining_pipeline(job_id=None):
     try:
         champion_model, champion_run = load_production_model(client)
     except Exception as e:
-        print(f"❌ Error during retraining: {e}")
+        print(f"Error during retraining: {e}")
         update_job_status(job_id, 'FAILED', decision=f'Error loading model: {e}')
         return
 
@@ -204,11 +204,10 @@ def run_retraining_pipeline(job_id=None):
     print(f"Challenger -> F1: {chall_f1:.4f} | ROC-AUC: {chall_auc:.4f}")
     
     # 6. Compare and Log
-    # For UI updates we log both F1 scores
     update_job_status(job_id, 'COMPARING', champ_f1=champ_f1, chall_f1=chall_f1)
     
     if chall_auc > champ_auc:
-        print(f"🏆 Challenger wins! Logging new production model to MLflow...")
+        print(f"Challenger wins! Logging new production model to MLflow...")
         mlflow.set_experiment(EXPERIMENT_NAME)
         with mlflow.start_run(run_name="Self_Healing_Retrain") as run:
             mlflow.log_param("model_type", "challenger_retrained")
@@ -216,10 +215,10 @@ def run_retraining_pipeline(job_id=None):
             mlflow.log_metric("roc_auc", chall_auc)
             mlflow.xgboost.log_model(challenger_model, "xgboost_baseline_model")
             client.set_tag(run.info.run_id, "stage", "Production")
-        print("✅ Pipeline complete. Model successfully rotated.")
+        print("Pipeline complete. Model successfully rotated.")
         update_job_status(job_id, 'COMPLETED', decision='CHALLENGER_WINS')
     else:
-        print("🛡️ Champion holds its ground. Challenger discarded.")
+        print("Champion holds its ground. Challenger discarded.")
         update_job_status(job_id, 'COMPLETED', decision='CHAMPION_HELD')
 
 if __name__ == "__main__":
