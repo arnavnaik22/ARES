@@ -1,10 +1,10 @@
 # ARES 2.0: Autonomous Machine Learning Reliability Platform
 
-ARES (Autonomous Reliability Engine System) is an end-to-end event streaming and self-healing machine learning architecture. It continuously ingests realtime data, evaluates transactions using an active XGBoost production model, detects concept drift (Dataset Shift) on-the-fly, and automatically rotates model versions with zero API downtime when data distributions shift.
+ARES (Autonomous Reliability Engine System) is an end-to-end event streaming and self-healing machine learning architecture. It continuously ingests realtime data, evaluates transactions using an active production model, detects concept drift (Dataset Shift) on-the-fly, and automatically rotates model versions with zero API downtime when data distributions shift.
 
 ## Architectural Overview
 
-ARES is composed of six fully decoupled microservices operating asynchronously. It mimics an enterprise-grade MLOps deployment pipeline running entirely locally.
+ARES is composed of six fully decoupled microservices operating asynchronously.
 
 ```mermaid
 graph TD
