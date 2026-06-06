@@ -58,9 +58,13 @@ def main():
             if 100 <= (index % 150) <= 150:
                 payload['price'] = (payload['price'] * 5.0) + 1000.0
                 payload['event_type'] = 'purchase'
+                # In drift bursts mark many of these as true frauds (ground truth)
+                payload['is_fraud'] = True
             else:
                 # Keep normal values, but ensure float formatting
                 payload['price'] = float(payload['price'])
+                # Most normal events are non-fraudulent in the synthetic baseline
+                payload['is_fraud'] = False
                 
             # Send the data asynchronously to the given topic
             producer.send(args.topic, value=payload)

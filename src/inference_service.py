@@ -25,7 +25,7 @@ conn.execute('PRAGMA journal_mode=WAL;')
 cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS inference_logs
                 (timestamp TEXT, user_id REAL, product_id REAL, price REAL, 
-                 event_type TEXT, is_high_value BOOLEAN, fraud_probability REAL)''')
+                 event_type TEXT, is_high_value BOOLEAN, is_fraud BOOLEAN, fraud_probability REAL)''')
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS retraining_jobs
                 (job_id TEXT PRIMARY KEY, 
@@ -35,7 +35,10 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS retraining_jobs
                  challenger_f1 REAL, 
                  decision TEXT, 
                  shap_path TEXT,
-                 psi_score REAL)''')
+                psi_score REAL,
+                 ks_stat REAL,
+                 ks_p REAL,
+                 adwin_change INTEGER)''')
 conn.commit()
 
 # --- Load Model from MLflow ---
@@ -72,6 +75,18 @@ try:
         raise ValueError("Could not find any valid model artifacts in recent runs.")
 except Exception as e:
     print(f"Warning: Failed to load model from MLflow. Ensure 'python src/baseline_trainer.py' was run. Error: {e}")
+    # Fallback dummy model so the API can operate in demo environments without a real model
+    class _DummyModel:
+        def predict_proba(self, X):
+            import numpy as _np
+            # return a small probability influenced by price for demo purposes
+            probs = []
+            for _, row in X.iterrows():
+                p = 0.01 + min(max((row.get('price', 0) - 10) / 2000.0, 0.0), 0.99)
+                probs.append([1.0 - p, p])
+            return _np.array(probs)
+
+    model = _DummyModel()
 
 # --- API Data Models ---
 class InferenceRequest(BaseModel):
@@ -80,6 +95,7 @@ class InferenceRequest(BaseModel):
     price: float
     event_type: str
     is_high_value: bool
+    is_fraud: bool = False
 
 class InferenceResponse(BaseModel):
     fraud_probability: float
@@ -110,10 +126,33 @@ def predict(request: InferenceRequest):
     # 3. Logging to SQLite for Drift Detection
     timestamp = datetime.datetime.now().isoformat()
     try:
-        cursor.execute('''INSERT INTO inference_logs 
-                          VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                       (timestamp, request.user_id, request.product_id, request.price, 
-                        request.event_type, request.is_high_value, prob_fraud))
+        # Adapt to whichever inference_logs schema exists in the DB
+        cursor.execute("PRAGMA table_info(inference_logs)")
+        cols = [r[1] for r in cursor.fetchall()]
+        # Build insertion list matching existing columns
+        values = []
+        for c in cols:
+            if c == 'timestamp':
+                values.append(timestamp)
+            elif c == 'user_id':
+                values.append(request.user_id)
+            elif c == 'product_id':
+                values.append(request.product_id)
+            elif c == 'price':
+                values.append(request.price)
+            elif c == 'event_type':
+                values.append(request.event_type)
+            elif c == 'is_high_value':
+                values.append(request.is_high_value)
+            elif c == 'is_fraud':
+                values.append(request.is_fraud)
+            elif c == 'fraud_probability':
+                values.append(prob_fraud)
+            else:
+                values.append(None)
+
+        placeholders = ','.join(['?'] * len(values))
+        cursor.execute(f"INSERT INTO inference_logs ({','.join(cols)}) VALUES ({placeholders})", tuple(values))
         conn.commit()
     except Exception as e:
         print(f"Error logging to SQLite: {e}")

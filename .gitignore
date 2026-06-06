@@ -20,3 +20,20 @@ logs/
 
 # MacOS
 .DS_Store
+
+# MLflow DB
+mlflow.db
+
+# SQLite WAL files
+*.db-wal
+*.db-shm
+
+# Spark temp
+spark-warehouse/
+
+# VS Code
+.vscode/
+
+# MLflow backups
+mlflow.db.bak
+mlruns.bak/

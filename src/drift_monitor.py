@@ -9,6 +9,12 @@ import pandas as pd
 import numpy as np
 import time
 
+# Try to use river's ADWIN if available for adaptive window drift detection
+try:
+    from river.drift import ADWIN
+except Exception:
+    ADWIN = None
+
 def calculate_psi(expected, actual, buckets=10):
     """
     Calculate the Population Stability Index (PSI) using quantiles.
@@ -76,6 +82,25 @@ def main():
                        import uuid
                        import datetime
                        import subprocess
+                       # ADWIN detection over the recent batch
+                       adwin_change = False
+                       try:
+                           if ADWIN is not None and len(recent_batch) > 0:
+                               ad = ADWIN()
+                               for v in recent_batch['price'].values[::-1]:
+                                   ad.update(float(v))
+                                   if ad.change_detected:
+                                       adwin_change = True
+                                       break
+                           else:
+                               # Fallback heuristic: large mean shift
+                               if len(expected_price) > 0:
+                                   mean_expected = np.mean(expected_price)
+                                   mean_actual = np.mean(recent_batch['price'].values)
+                                   if abs(mean_actual - mean_expected) / (mean_expected + 1e-9) > 0.25:
+                                       adwin_change = True
+                       except Exception as e:
+                           print(f"ADWIN check failed: {e}")
                        
                        try:
                            conn_chk = sqlite3.connect(db_path, timeout=10)
@@ -109,7 +134,7 @@ def main():
                            else:
                                job_id = f"job_{uuid.uuid4().hex[:8]}"
                                start_time = datetime.datetime.now().isoformat()
-                               cursor_chk.execute("INSERT INTO retraining_jobs (job_id, start_time, status, psi_score) VALUES (?, ?, ?, ?)", (job_id, start_time, 'PENDING', psi))
+                               cursor_chk.execute("INSERT INTO retraining_jobs (job_id, start_time, status, psi_score, adwin_change) VALUES (?, ?, ?, ?, ?)", (job_id, start_time, 'PENDING', psi, int(adwin_change)))
                                conn_chk.commit()
                                
                                import sys

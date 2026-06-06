@@ -198,6 +198,11 @@ def main():
                     m1, m2, m3 = st.columns(3)
                     with m1:
                         st.metric("Detected PSI Drift", f"{last_job.get('psi_score', 0):.2f}", delta="Alert Threshold: 0.20", delta_color="inverse")
+                        # Display KS test if available
+                        ks_stat = last_job.get('ks_stat') if 'ks_stat' in last_job.index else None
+                        ks_p = last_job.get('ks_p') if 'ks_p' in last_job.index else None
+                        if ks_stat is not None and not pd.isna(ks_stat):
+                            st.write(f"KS stat: {ks_stat:.4f} | p-value: {ks_p:.3g}")
                     with m2:
                         st.metric("Champion F1 Score", f"{champ_f1:.4f}")
                     with m3:
