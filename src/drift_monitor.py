@@ -9,6 +9,8 @@ import pandas as pd
 import numpy as np
 import time
 
+MONITORED_FEATURES = ["price", "discount_pct", "session_duration", "merchant_risk_score"]
+
 # Try to use river's ADWIN if available for adaptive window drift detection
 try:
     from river.drift import ADWIN
@@ -51,8 +53,7 @@ def main():
     baseline_path = "data/raw/ecommerce_behavior.csv"
     try:
         baseline_df = pd.read_csv(baseline_path)
-        expected_price = baseline_df['price'].dropna().values
-        print(f"Baseline loaded. {len(expected_price)} records found.")
+        print(f"Baseline loaded. {len(baseline_df)} records found.")
     except Exception as e:
          print(f"Failed to load baseline data: {e}. Check if data/raw/ecommerce_behavior.csv exists.")
          return
@@ -66,17 +67,25 @@ def main():
     while True:
          try:
              conn = sqlite3.connect(db_path)
-             query = "SELECT price FROM inference_logs ORDER BY timestamp DESC LIMIT 200"
+             query = f"SELECT {', '.join(MONITORED_FEATURES)} FROM inference_logs ORDER BY timestamp DESC LIMIT 200"
              recent_batch = pd.read_sql_query(query, conn)
              conn.close()
              
              if len(recent_batch) > 10:
-                  actual_price = recent_batch['price'].values
-                  psi = calculate_psi(expected_price, actual_price)
+                  psi_scores = []
+                  for feature in MONITORED_FEATURES:
+                      if feature not in recent_batch.columns or feature not in baseline_df.columns:
+                          continue
+                      expected_values = baseline_df[feature].dropna().values
+                      actual_values = recent_batch[feature].dropna().values
+                      if len(expected_values) > 0 and len(actual_values) > 0:
+                          psi_scores.append(calculate_psi(expected_values, actual_values))
+
+                  psi = float(np.mean(psi_scores)) if psi_scores else 0.0
                   
                   if psi > psi_threshold:
                        print(f"\nCONCEPT DRIFT DETECTED")
-                       print(f"Feature: 'price' | Current PSI: {psi:.4f} (Threshold: {psi_threshold})")
+                       print(f"Features: {', '.join(MONITORED_FEATURES)} | Current PSI: {psi:.4f} (Threshold: {psi_threshold})")
                        print(f"Warning: The incoming distribution has significantly shifted from the baseline!\n")
                        
                        import uuid
@@ -94,9 +103,9 @@ def main():
                                        break
                            else:
                                # Fallback heuristic: large mean shift
-                               if len(expected_price) > 0:
-                                   mean_expected = np.mean(expected_price)
-                                   mean_actual = np.mean(recent_batch['price'].values)
+                               if 'price' in baseline_df.columns and len(baseline_df['price'].dropna()) > 0:
+                                   mean_expected = np.mean(baseline_df['price'].dropna().values)
+                                   mean_actual = np.mean(recent_batch['price'].dropna().values)
                                    if abs(mean_actual - mean_expected) / (mean_expected + 1e-9) > 0.25:
                                        adwin_change = True
                        except Exception as e:

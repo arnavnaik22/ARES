@@ -14,7 +14,15 @@ import mlflow
 import mlflow.xgboost
 from mlflow.tracking import MlflowClient
 
+try:
+    from src.feature_schema import encode_feature_frame
+except ImportError:
+    from feature_schema import encode_feature_frame
+
 app = FastAPI(title="ARES Inference Service", version="1.0.0")
+
+os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
+mlflow.set_tracking_uri(f"file://{os.path.abspath('mlruns')}")
 
 # --- Initialize SQLite Database ---
 DB_PATH = "data/inference_logs.db"
@@ -25,7 +33,44 @@ conn.execute('PRAGMA journal_mode=WAL;')
 cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS inference_logs
                 (timestamp TEXT, user_id REAL, product_id REAL, price REAL, 
-                 event_type TEXT, is_high_value BOOLEAN, is_fraud BOOLEAN, fraud_probability REAL)''')
+                 event_type TEXT, category TEXT, device_type TEXT, channel TEXT, country TEXT,
+                 session_duration REAL, account_age_days REAL, prior_orders REAL, prior_chargebacks REAL,
+                 discount_pct REAL, shipping_speed TEXT, hour_of_day REAL, is_weekend INTEGER, cart_size REAL,
+                 merchant_risk_score REAL, is_high_value BOOLEAN, is_fraud BOOLEAN, fraud_probability REAL)''')
+
+def ensure_inference_schema():
+    cursor.execute("PRAGMA table_info(inference_logs)")
+    existing_columns = {row[1] for row in cursor.fetchall()}
+    desired_columns = {
+        "timestamp": "TEXT",
+        "user_id": "REAL",
+        "product_id": "REAL",
+        "price": "REAL",
+        "event_type": "TEXT",
+        "category": "TEXT",
+        "device_type": "TEXT",
+        "channel": "TEXT",
+        "country": "TEXT",
+        "session_duration": "REAL",
+        "account_age_days": "REAL",
+        "prior_orders": "REAL",
+        "prior_chargebacks": "REAL",
+        "discount_pct": "REAL",
+        "shipping_speed": "TEXT",
+        "hour_of_day": "REAL",
+        "is_weekend": "INTEGER",
+        "cart_size": "REAL",
+        "merchant_risk_score": "REAL",
+        "is_high_value": "INTEGER",
+        "is_fraud": "INTEGER",
+        "fraud_probability": "REAL",
+    }
+    for column, column_type in desired_columns.items():
+        if column not in existing_columns:
+            cursor.execute(f"ALTER TABLE inference_logs ADD COLUMN {column} {column_type}")
+    conn.commit()
+
+ensure_inference_schema()
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS retraining_jobs
                 (job_id TEXT PRIMARY KEY, 
@@ -94,7 +139,21 @@ class InferenceRequest(BaseModel):
     product_id: float
     price: float
     event_type: str
-    is_high_value: bool
+    category: str = "electronics"
+    device_type: str = "desktop"
+    channel: str = "organic"
+    country: str = "US"
+    session_duration: float = 0.0
+    account_age_days: float = 0.0
+    prior_orders: float = 0.0
+    prior_chargebacks: float = 0.0
+    discount_pct: float = 0.0
+    shipping_speed: str = "standard"
+    hour_of_day: float = 0.0
+    is_weekend: int = 0
+    cart_size: float = 0.0
+    merchant_risk_score: float = 0.0
+    is_high_value: bool = False
     is_fraud: bool = False
 
 class InferenceResponse(BaseModel):
@@ -110,14 +169,28 @@ def predict(request: InferenceRequest):
          raise HTTPException(status_code=503, detail="Model is not loaded.")
          
     # 1. Feature Preprocessing
-    encoded_event = EVENT_MAP.get(request.event_type.lower(), 2) # Default to 'view'
-    
     features = pd.DataFrame([{
         'user_id': request.user_id,
-        'event_type': encoded_event,
         'product_id': request.product_id,
-        'price': request.price
+        'price': request.price,
+        'event_type': request.event_type,
+        'category': request.category,
+        'device_type': request.device_type,
+        'channel': request.channel,
+        'country': request.country,
+        'session_duration': request.session_duration,
+        'account_age_days': request.account_age_days,
+        'prior_orders': request.prior_orders,
+        'prior_chargebacks': request.prior_chargebacks,
+        'discount_pct': request.discount_pct,
+        'shipping_speed': request.shipping_speed,
+        'hour_of_day': request.hour_of_day,
+        'is_weekend': request.is_weekend,
+        'cart_size': request.cart_size,
+        'merchant_risk_score': request.merchant_risk_score,
+        'is_high_value': int(request.is_high_value)
     }])
+    features = encode_feature_frame(features)
     
     # 2. Prediction
     # extract probability for the positive class (1: fraud)
@@ -142,6 +215,34 @@ def predict(request: InferenceRequest):
                 values.append(request.price)
             elif c == 'event_type':
                 values.append(request.event_type)
+            elif c == 'category':
+                values.append(request.category)
+            elif c == 'device_type':
+                values.append(request.device_type)
+            elif c == 'channel':
+                values.append(request.channel)
+            elif c == 'country':
+                values.append(request.country)
+            elif c == 'session_duration':
+                values.append(request.session_duration)
+            elif c == 'account_age_days':
+                values.append(request.account_age_days)
+            elif c == 'prior_orders':
+                values.append(request.prior_orders)
+            elif c == 'prior_chargebacks':
+                values.append(request.prior_chargebacks)
+            elif c == 'discount_pct':
+                values.append(request.discount_pct)
+            elif c == 'shipping_speed':
+                values.append(request.shipping_speed)
+            elif c == 'hour_of_day':
+                values.append(request.hour_of_day)
+            elif c == 'is_weekend':
+                values.append(request.is_weekend)
+            elif c == 'cart_size':
+                values.append(request.cart_size)
+            elif c == 'merchant_risk_score':
+                values.append(request.merchant_risk_score)
             elif c == 'is_high_value':
                 values.append(request.is_high_value)
             elif c == 'is_fraud':

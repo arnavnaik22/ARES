@@ -46,10 +46,26 @@ def main():
         
     # 2. Define schema corresponding to the simulated JSON payload format
     schema = StructType([
+        StructField("event_time", StringType(), True),
         StructField("user_id", IntegerType(), True),
         StructField("product_id", IntegerType(), True),
         StructField("price", DoubleType(), True),
         StructField("event_type", StringType(), True),
+        StructField("category", StringType(), True),
+        StructField("device_type", StringType(), True),
+        StructField("channel", StringType(), True),
+        StructField("country", StringType(), True),
+        StructField("session_duration", DoubleType(), True),
+        StructField("account_age_days", IntegerType(), True),
+        StructField("prior_orders", IntegerType(), True),
+        StructField("prior_chargebacks", IntegerType(), True),
+        StructField("discount_pct", DoubleType(), True),
+        StructField("shipping_speed", StringType(), True),
+        StructField("hour_of_day", IntegerType(), True),
+        StructField("is_weekend", IntegerType(), True),
+        StructField("cart_size", IntegerType(), True),
+        StructField("merchant_risk_score", DoubleType(), True),
+        StructField("is_high_value", IntegerType(), True),
         StructField("is_fraud", IntegerType(), True)
     ])
     
@@ -62,7 +78,7 @@ def main():
         
     # 4. Apply real-time transformation: create 'is_high_value' tag
     transformed_stream = parsed_stream \
-        .withColumn("is_high_value", when(col("price") > 500, True).otherwise(False))
+        .withColumn("is_high_value", when(col("price") > 500, 1).otherwise(col("is_high_value").cast(IntegerType())))
         
     print("Starting the stream, waiting for data (sending to Inference API)...")
     

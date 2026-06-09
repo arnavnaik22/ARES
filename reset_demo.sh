@@ -12,11 +12,18 @@ rm -f data/inference_logs.db-shm
 echo "Deleting generated SHAP drift analysis plots..."
 rm -f data/shap_drift_*.png
 
-# 3. Clean Spark Checkpoints
+# 3. Reset MLflow tracking state
+echo "Resetting MLflow tracking artifacts..."
+rm -rf mlruns
+rm -f mlflow.db
+rm -f mlflow.db-wal
+rm -f mlflow.db-shm
+
+# 4. Clean Spark Checkpoints
 echo "Wiping PySpark streaming checkpoints..."
 rm -rf /tmp/ares_fresh_chkpt_v3
 
-# 4. Wipe Kafka Queue (Docker Volumes)
+# 5. Wipe Kafka Queue (Docker Volumes)
 echo "Destroying left-over Kafka messages..."
 docker compose down -v
 docker compose up -d

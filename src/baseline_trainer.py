@@ -7,11 +7,15 @@ import os
 import argparse
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from xgboost import XGBClassifier
 import mlflow
 import mlflow.xgboost
+
+try:
+    from src.feature_schema import MODEL_FEATURES, encode_feature_frame
+except ImportError:
+    from feature_schema import MODEL_FEATURES, encode_feature_frame
 
 def load_data(file_path: str) -> pd.DataFrame:
     """
@@ -41,32 +45,11 @@ def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Preprocessed dataframe ready for modeling.
     """
     df_processed = df.copy()
-    
-    # 1. Handle missing values
+
     if 'is_fraud' in df_processed.columns:
         df_processed = df_processed.dropna(subset=['is_fraud'])
-    
-    # Impute continuous features (e.g. price) with median
-    if 'price' in df_processed.columns:
-        median_price = df_processed['price'].median()
-        df_processed['price'] = df_processed['price'].fillna(median_price)
-        
-    # Impute categorical features (e.g. event_type) with mode
-    if 'event_type' in df_processed.columns:
-        mode_event = df_processed['event_type'].mode()[0]
-        df_processed['event_type'] = df_processed['event_type'].fillna(mode_event)
-        
-    # Fill missing IDs with a placeholder value
-    for col in ['product_id', 'user_id']:
-        if col in df_processed.columns:
-            df_processed[col] = df_processed[col].fillna(-1)
 
-    # 2. Encode categorical variables
-    encoder = LabelEncoder()
-    if 'event_type' in df_processed.columns:
-        df_processed['event_type'] = encoder.fit_transform(df_processed['event_type'].astype(str))
-        
-    return df_processed
+    return encode_feature_frame(df_processed)
 
 def train_model(X_train: pd.DataFrame, y_train: pd.Series, params: dict) -> XGBClassifier:
     """
@@ -115,6 +98,10 @@ def main():
     parser.add_argument("--learning_rate", type=float, default=0.1, help="XGBoost learning_rate")
     args = parser.parse_args()
 
+    os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
+    mlflow.set_tracking_uri(f"file://{os.path.abspath('mlruns')}")
+    os.makedirs('mlruns', exist_ok=True)
+
     # Configure MLflow to track locally in the current directory (creates ./mlruns)
     mlflow.set_experiment("ARES_Phase1_Baseline")
 
@@ -126,21 +113,18 @@ def main():
         print("Please ensure you place the dataset at the correct path before running the script.")
         return
 
-    print("Preprocessing data...")
-    df_processed = preprocess_data(df)
-    
-    # Ensure target column is present
-    if 'is_fraud' not in df_processed.columns:
+    if 'is_fraud' not in df.columns:
         print("Error: Target column 'is_fraud' not found in dataset!")
         return
 
-    features = ['user_id', 'event_type', 'product_id', 'price']
-    
-    # Keep only features actually present in the dataframe
-    features = [f for f in features if f in df_processed.columns]
-    
+    y = df['is_fraud']
+
+    print("Preprocessing data...")
+    df_processed = preprocess_data(df)
+
+    features = [f for f in MODEL_FEATURES if f in df_processed.columns]
+
     X = df_processed[features]
-    y = df_processed['is_fraud']
     
     # 80/20 train-test split stratifying on target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)

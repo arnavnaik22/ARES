@@ -10,6 +10,11 @@ import argparse
 import pandas as pd
 from kafka import KafkaProducer
 
+try:
+    from src.feature_schema import MODEL_FEATURES
+except ImportError:
+    from feature_schema import MODEL_FEATURES
+
 def create_producer(bootstrap_servers: str) -> KafkaProducer:
     """
     Initialize and return a KafkaProducer instance.
@@ -24,7 +29,7 @@ def main():
     parser.add_argument("--data_path", type=str, default="data/raw/ecommerce_behavior.csv", help="Path to the raw CSV file")
     parser.add_argument("--topic", type=str, default="ecommerce-events", help="Kafka topic to publish to")
     parser.add_argument("--broker", type=str, default="localhost:9092", help="Kafka bootstrap broker address")
-    parser.add_argument("--delay", type=float, default=0.5, help="Sleep delay in seconds between events")
+    parser.add_argument("--delay", type=float, default=0.05, help="Sleep delay in seconds between events")
     args = parser.parse_args()
 
     if not os.path.exists(args.data_path):
@@ -48,28 +53,45 @@ def main():
     print(f"Starting stream to topic '{args.topic}'. Press Ctrl+C to stop.")
     try:
         for index, row in df.iterrows():
-            # Convert row to dictionary payload
             payload = row.to_dict()
-            
-            # Simulate dynamic Concept Drift
-            # For every block of 150 events: 
-            # - First 100: Normal baseline data
-            # - Next 50: Severe concept drift (Prices surge, anomalous purchase behavior)
-            if 100 <= (index % 150) <= 150:
-                payload['price'] = (payload['price'] * 5.0) + 1000.0
-                payload['event_type'] = 'purchase'
-                # In drift bursts mark many of these as true frauds (ground truth)
+
+            cycle = index % 360
+            stealth_window = 150 <= cycle < 220
+            drift_window = cycle >= 220
+
+            if stealth_window or drift_window:
+                payload['price'] = round(float(payload.get('price', 0.0)) * (1.45 if stealth_window else 2.35) + (35.0 if stealth_window else 120.0), 2)
+                payload['event_type'] = 'cart' if stealth_window else 'purchase'
+                payload['device_type'] = 'mobile'
+                payload['channel'] = 'affiliate' if stealth_window else 'social'
+                payload['country'] = 'IN' if stealth_window else 'BR'
+                payload['shipping_speed'] = 'overnight'
+                payload['session_duration'] = max(float(payload.get('session_duration', 0.0)) * (0.72 if stealth_window else 0.55), 8.0)
+                payload['discount_pct'] = max(float(payload.get('discount_pct', 0.0)) * (0.65 if stealth_window else 0.45), 0.0)
+                payload['prior_chargebacks'] = int(payload.get('prior_chargebacks', 0)) + (1 if stealth_window else 2)
+                payload['merchant_risk_score'] = min(float(payload.get('merchant_risk_score', 0.0)) + (0.14 if stealth_window else 0.28), 1.0)
+                payload['account_age_days'] = max(int(payload.get('account_age_days', 0)) // (3 if stealth_window else 5), 1)
+                payload['cart_size'] = int(payload.get('cart_size', 0)) + (1 if stealth_window else 3)
                 payload['is_fraud'] = True
             else:
-                # Keep normal values, but ensure float formatting
-                payload['price'] = float(payload['price'])
-                # Most normal events are non-fraudulent in the synthetic baseline
-                payload['is_fraud'] = False
-                
-            # Send the data asynchronously to the given topic
+                payload['price'] = float(payload.get('price', 0.0))
+                payload['session_duration'] = float(payload.get('session_duration', 0.0))
+                payload['discount_pct'] = float(payload.get('discount_pct', 0.0))
+                payload['merchant_risk_score'] = float(payload.get('merchant_risk_score', 0.0))
+                payload['prior_chargebacks'] = int(payload.get('prior_chargebacks', 0))
+                payload['cart_size'] = int(payload.get('cart_size', 0))
+                payload['is_fraud'] = bool(payload.get('is_fraud', False))
+
+            payload['is_high_value'] = bool(payload.get('is_high_value', float(payload['price']) > 500.0))
+            payload['is_weekend'] = int(payload.get('is_weekend', 0))
+            payload['hour_of_day'] = int(payload.get('hour_of_day', 0))
+
+            # Keep the payload aligned with the model schema while preserving extra raw columns for observability.
+            allowed_keys = set(MODEL_FEATURES) | {'event_time', 'is_fraud'}
+            payload = {key: value for key, value in payload.items() if key in allowed_keys}
+
             producer.send(args.topic, value=payload)
-            
-            drift_status = "[DRIFT BURST]" if 100 <= (index % 150) <= 150 else "[NORMAL]"
+            drift_status = "[DRIFT BURST]" if drift_window else ("[STEALTH DRIFT]" if stealth_window else "[NORMAL]")
             print(f"{drift_status} Sent event {index}: {payload}")
             time.sleep(args.delay)
     except KeyboardInterrupt:
