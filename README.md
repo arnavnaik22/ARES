@@ -83,15 +83,15 @@ This single command:
 ---
 
 ## 8. Benchmark Results
-Evaluated across five independent probabilistic drift scenarios:
+The benchmark evaluates the platform across five synthetic drift scenarios. In each scenario, the baseline model experiences performance degradation after drift, the monitoring pipeline detects the distribution shift using PSI, automated retraining produces a challenger model, and the challenger is deployed after validation to recover predictive performance.
 
-| Scenario | Drift Start | Detection Step | Latency | Peak PSI | Cycles | Challenger F1 |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Scenario A (Gradual Covariate Drift)** | 300 | 500 | 200 | 0.8880 | 1 | 0.9077 |
-| **Scenario B (Sudden Covariate Drift)** | 300 | 500 | 200 | 1.9703 | 1 | 0.8060 |
-| **Scenario C (Feature Distribution Drift)** | 300 | 500 | 200 | 0.8355 | 1 | 0.8766 |
-| **Scenario D (Concept Drift)** | 300 | 500 | 200 | 2.9489 | 1 | 0.9379 |
-| **Scenario E (Recurring Drift)** | 300 | 500 | 200 | 2.0705 | 2 | 0.9410 |
+| Scenario | Drift Type | Peak PSI | F1 Before Retraining | F1 After Retraining | Recovery (ΔF1) | Retrain Cycles |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Scenario A - Gradual Covariate Drift** | Gradual Covariate Drift | 0.8880 | 0.4799 | 0.9077 | +0.4278 | 1 |
+| **Scenario B - Sudden Covariate Drift** | Sudden Covariate Drift | 1.9703 | 0.6844 | 0.8060 | +0.1216 | 1 |
+| **Scenario C - Feature Distribution Drift** | Feature Distribution Drift | 0.8355 | 0.7873 | 0.8766 | +0.0893 | 1 |
+| **Scenario D - Concept Drift** | Concept Drift | 2.9489 | 0.1327 | 0.9379 | +0.8051 | 1 |
+| **Scenario E - Recurring Drift** | Recurring Drift | 2.0705 | 0.3427 | 0.9410 | +0.5983 | 2 |
 
 ---
 

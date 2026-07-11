@@ -8,11 +8,11 @@
 ## 1. Recovery Summary Table
 | Scenario Name | Drift Step | Detection Step | Latency (Events) | Peak PSI | F1 Before | Lowest F1 | F1 Recovered | Abs Recovery | Rel Recovery (%) | Retrain Time | Cycles |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Scenario A - Gradual Covariate Drift** | 300 | 500 | 200 | 0.8880 | 0.9039 | 0.4799 | 0.9077 | 0.4278 | 89.13% | 30.41s | 1 |
-| **Scenario B - Sudden Covariate Drift** | 300 | 500 | 200 | 1.9703 | 0.9039 | 0.6844 | 0.8060 | 0.1216 | 17.77% | 27.84s | 1 |
-| **Scenario C - Feature Distribution Drift** | 300 | 500 | 200 | 0.8355 | 0.9039 | 0.7873 | 0.8766 | 0.0893 | 11.34% | 28.54s | 1 |
-| **Scenario D - Concept Drift** | 300 | 500 | 200 | 2.9489 | 0.9039 | 0.1327 | 0.9379 | 0.8051 | 606.54% | 30.46s | 1 |
-| **Scenario E - Recurring Drift** | 300 | 500 | 200 | 2.0705 | 0.8344 | 0.3427 | 0.9410 | 0.5983 | 174.57% | 58.55s | 2 |
+| **Scenario A - Gradual Covariate Drift** | 300 | 500 | 200 | 0.8880 | 0.9039 | 0.4799 | 0.9077 | 0.4278 | 89.13% | 26.59s | 1 |
+| **Scenario B - Sudden Covariate Drift** | 300 | 500 | 200 | 1.9703 | 0.9039 | 0.6844 | 0.8060 | 0.1216 | 17.77% | 24.40s | 1 |
+| **Scenario C - Feature Distribution Drift** | 300 | 500 | 200 | 0.8355 | 0.9039 | 0.7873 | 0.8766 | 0.0893 | 11.34% | 37.07s | 1 |
+| **Scenario D - Concept Drift** | 300 | 500 | 200 | 2.9489 | 0.9039 | 0.1327 | 0.9379 | 0.8051 | 606.54% | 28.13s | 1 |
+| **Scenario E - Recurring Drift** | 300 | 500 | 200 | 2.0705 | 0.8344 | 0.3427 | 0.9410 | 0.5983 | 174.57% | 38.34s | 2 |
 
 ---
 
@@ -41,7 +41,7 @@
 2.  **Drift Introduced**: Categorical traffic features (devices and countries) shift gradually at step `300` while target fraud probabilities remain constant.
 3.  **PSI Increase**: PSI of device categories increases, crossing the threshold level.
 4.  **Drift Detected**: Drift monitor registers the shift at step `500`.
-5.  **Retraining Triggered**: A retraining cycle is executed to ensure the model aligns with the new baseline.
+5.  **Retraining Cycle**: A retraining cycle is executed to ensure the model aligns with the new baseline.
 6.  **Challenger Deployed**: The Challenger is rolled out at step `650`.
 7.  **Performance Recovered**: Model F1 score is successfully maintained at `0.8766` without degradation.
 
@@ -116,4 +116,4 @@
 ---
 
 ## 5. Conclusion
-The benchmarks prove that ARES functions as a **robust, closed-loop autonomous model reliability platform**, successfully detecting multi-modal drift events and restoring model predictive quality.
+The benchmarks demonstrate that ARES functions as a **closed-loop autonomous model reliability platform**, successfully detecting multi-modal drift events and restoring model predictive quality.

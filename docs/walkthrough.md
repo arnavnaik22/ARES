@@ -54,13 +54,13 @@ ARES2.0/
 ## 3. Multi-Scenario Benchmark Results
 Each scenario represents a distinct machine learning drift challenge, validating the closed-loop autonomous recovery lifecycle:
 
-| Scenario Name | Base F1 | Lowest F1 | Recovered F1 | Absolute Recovery | Peak PSI | Cycles |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Scenario A — Gradual Covariate Drift** | 0.9039 | 0.4799 | 0.9077 | +42.78% | 0.8880 | 1 |
-| **Scenario B — Sudden Covariate Drift** | 0.9039 | 0.6844 | 0.8060 | +12.16% | 1.9703 | 1 |
-| **Scenario C — Feature Distribution Drift** | 0.9039 | 0.7873 | 0.8766 | +8.93% | 0.8355 | 1 |
-| **Scenario D — Concept Drift** | 0.9039 | 0.1327 | 0.9379 | +80.52% | 2.9489 | 1 |
-| **Scenario E — Recurring Drift** | 0.8344 | 0.3427 | 0.9410 | +59.83% | 2.0705 | 2 |
+| Scenario | Drift Type | Peak PSI | F1 Before Retraining | F1 After Retraining | Recovery (ΔF1) | Retrain Cycles |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Scenario A - Gradual Covariate Drift** | Gradual Covariate Drift | 0.8880 | 0.4799 | 0.9077 | +0.4278 | 1 |
+| **Scenario B - Sudden Covariate Drift** | Sudden Covariate Drift | 1.9703 | 0.6844 | 0.8060 | +0.1216 | 1 |
+| **Scenario C - Feature Distribution Drift** | Feature Distribution Drift | 0.8355 | 0.7873 | 0.8766 | +0.0893 | 1 |
+| **Scenario D - Concept Drift** | Concept Drift | 2.9489 | 0.1327 | 0.9379 | +0.8051 | 1 |
+| **Scenario E - Recurring Drift** | Recurring Drift | 2.0705 | 0.3427 | 0.9410 | +0.5983 | 2 |
 
 *   **Validation Success**: Every scenario is verified to have a unique performance profile and F1 trajectory. No two scenarios share identical metrics or confusion matrices.
 *   **Immediate Recovery**: Reducing the sliding evaluation window size to 50 steps cuts recovery latency in half, allowing the F1 metrics to start climbing immediately after deployment of the Challenger model.

@@ -6,7 +6,7 @@
         "detection_latency": 200,
         "peak_psi": 0.8879768233265013,
         "retraining_cycles": 1,
-        "retraining_duration": 30.414122819900513,
+        "retraining_duration": 26.586255311965942,
         "model_deployment_time": 650,
         "chall_f1": 0.9772625947391886,
         "chall_auc": 0.9999901841270791,
@@ -18,7 +18,7 @@
         "drift_step": 300,
         "detection_step": 500,
         "deployment_step": 650,
-        "retraining_time": 30.414122819900513
+        "retraining_time": 26.586255311965942
     },
     {
         "scenario": "Scenario B - Sudden Covariate Drift",
@@ -27,7 +27,7 @@
         "detection_latency": 200,
         "peak_psi": 1.9702593195425737,
         "retraining_cycles": 1,
-        "retraining_duration": 27.838992595672607,
+        "retraining_duration": 24.396263122558594,
         "model_deployment_time": 650,
         "chall_f1": 0.9638739431206764,
         "chall_auc": 0.9999897879951318,
@@ -39,7 +39,7 @@
         "drift_step": 300,
         "detection_step": 500,
         "deployment_step": 650,
-        "retraining_time": 27.838992595672607
+        "retraining_time": 24.396263122558594
     },
     {
         "scenario": "Scenario C - Feature Distribution Drift",
@@ -48,7 +48,7 @@
         "detection_latency": 200,
         "peak_psi": 0.8355012085871877,
         "retraining_cycles": 1,
-        "retraining_duration": 28.54248881340027,
+        "retraining_duration": 37.074923515319824,
         "model_deployment_time": 650,
         "chall_f1": 0.952076677316294,
         "chall_auc": 0.9999866512802239,
@@ -60,7 +60,7 @@
         "drift_step": 300,
         "detection_step": 500,
         "deployment_step": 650,
-        "retraining_time": 28.54248881340027
+        "retraining_time": 37.074923515319824
     },
     {
         "scenario": "Scenario D - Concept Drift",
@@ -69,7 +69,7 @@
         "detection_latency": 200,
         "peak_psi": 2.948904125490781,
         "retraining_cycles": 1,
-        "retraining_duration": 30.458154916763306,
+        "retraining_duration": 28.132813453674316,
         "model_deployment_time": 650,
         "chall_f1": 0.972291493488501,
         "chall_auc": 0.9986309722826165,
@@ -81,7 +81,7 @@
         "drift_step": 300,
         "detection_step": 500,
         "deployment_step": 650,
-        "retraining_time": 30.458154916763306
+        "retraining_time": 28.132813453674316
     },
     {
         "scenario": "Scenario E - Recurring Drift",
@@ -90,7 +90,7 @@
         "detection_latency": 200,
         "peak_psi": 2.0704894174725417,
         "retraining_cycles": 2,
-        "retraining_duration": 58.54628586769104,
+        "retraining_duration": 38.33977460861206,
         "model_deployment_time": 650,
         "chall_f1": 0.9616368286445013,
         "chall_auc": 0.9999916063925715,
@@ -102,6 +102,6 @@
         "drift_step": 300,
         "detection_step": 500,
         "deployment_step": 650,
-        "retraining_time": 58.54628586769104
+        "retraining_time": 38.33977460861206
     }
 ]

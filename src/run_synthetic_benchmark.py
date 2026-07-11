@@ -951,6 +951,8 @@ def scenario_e_drift(row, step, drift_start=300, second_drift_start=700, idx=0):
     row["is_fraud"] = int(get_fraud_labels(temp_df, is_drifted=is_drifted, scenario_name="Scenario E - Recurring Drift", step=step)[0])
     return row
 
+
+
 def generate_benchmark_report(results, filepath):
     # Task 1: Add a Recovery Summary Table
     rows = []
@@ -1004,7 +1006,7 @@ def generate_benchmark_report(results, filepath):
 2.  **Drift Introduced**: Categorical traffic features (devices and countries) shift gradually at step `300` while target fraud probabilities remain constant.
 3.  **PSI Increase**: PSI of device categories increases, crossing the threshold level.
 4.  **Drift Detected**: Drift monitor registers the shift at step `500`.
-5.  **Retraining Triggered**: A retraining cycle is executed to ensure the model aligns with the new baseline.
+5.  **Retraining Cycle**: A retraining cycle is executed to ensure the model aligns with the new baseline.
 6.  **Challenger Deployed**: The Challenger is rolled out at step `650`.
 7.  **Performance Recovered**: Model F1 score is successfully maintained at `{results[2]['f1_after_recovery']:.4f}` without degradation.
 
@@ -1079,7 +1081,7 @@ def generate_benchmark_report(results, filepath):
 ---
 
 ## 5. Conclusion
-The benchmarks prove that ARES functions as a **robust, closed-loop autonomous model reliability platform**, successfully detecting multi-modal drift events and restoring model predictive quality.
+The benchmarks demonstrate that ARES functions as a **closed-loop autonomous model reliability platform**, successfully detecting multi-modal drift events and restoring model predictive quality.
 """
     with open(filepath, "w") as f:
         f.write(report)
@@ -1087,6 +1089,8 @@ The benchmarks prove that ARES functions as a **robust, closed-loop autonomous m
     # Write JSON
     with open(filepath.replace(".md", ".json"), "w") as f:
         json.dump(results, f, indent=4)
+
+
 
 def main():
     log_event("Benchmark Started")
