@@ -1,0 +1,1 @@
+["price", "hour_of_day", "is_weekend", "is_high_value", "account_age_days", "device_type", "category", "merchant_risk_score", "session_duration", "prior_orders", "prior_chargebacks", "discount_pct", "cart_size"]

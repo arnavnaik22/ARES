@@ -2,11 +2,19 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
-# Project specific ignores
+# Caches
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Databases and data directory
+*.db
+*.db-wal
+*.db-shm
 data/
-mlruns/
-checkpoints/
+mlflow.db
 
 # Virtual environments
 venv/
@@ -17,23 +25,21 @@ miniforge3/
 # Logs
 *.log
 logs/
+reports/synthetic_platform_validation/benchmark_state_trace.log
 
-# MacOS
+# Live status dashboard files
+reports/synthetic_platform_validation/live_status.json
+reports/synthetic_platform_validation/live_status.json.tmp
+
+# IDEs and OS junk
 .DS_Store
-
-# MLflow DB
-mlflow.db
-
-# SQLite WAL files
-*.db-wal
-*.db-shm
-
-# Spark temp
-spark-warehouse/
-
-# VS Code
+.idea/
 .vscode/
+.env
 
-# MLflow backups
-mlflow.db.bak
+# Project specific caches and output directories
+mlruns/
 mlruns.bak/
+checkpoints/
+spark-warehouse/
+/tmp/ares_fresh_chkpt_v3
